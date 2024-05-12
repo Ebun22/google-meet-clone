@@ -6,6 +6,7 @@ var bodyParser = require('body-parser')
 const fileUpload = require('express-fileupload')
 const server = app.listen(8000, () => console.log("Listening on port 8000..."));
 let userConnection = [];
+let otherUsers = []
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -28,16 +29,30 @@ io.on('connection', (socket) => {
     console.log('socket id is ', socket.id);
 
     socket.on("userConnection", (data)=>{
-        const otherUsers = userConnection.filter( user => user.meetingId == data.meetingId);
-
+            console.log("this is the data passed from client: ", data)
+        if (otherUsers.length === 0) {
+            // If otherUsers array is empty, add the current user's details
+            otherUsers.push({
+                connectionId: socket.id,
+                displayName: data.displayName,
+                meetingId: data.meetingId
+            });
+        } else {
+            // If otherUsers array is not empty, add users from userConnection with the same meetingId
+            const usersWithSameMeetingId = userConnection.filter(user => (user.meetingId === otherUsers[0].meetingId) && (user.connectionId != otherUsers[0].connectionId));
+            console.log(usersWithSameMeetingId)
+            otherUsers.push(...usersWithSameMeetingId);
+        }
+        
         userConnection.push({
             connectionId: socket.id,
             displayName: data.displayName,
             meetingId: data.meetingId
         })
 
-        const userCount = userConnection.length;
-        console.log("This is number of users on application: ", userCount);
+        const userCount = (otherUsers.length);
+        // console.log("This is count of users in my room: ", userCount);
+        // console.log("This is the other users: ", otherUsers);
 
         otherUsers.forEach( user => {
             socket.to(user.connectionId).emit("informOtherUsersAboutMe", {

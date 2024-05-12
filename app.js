@@ -368,9 +368,9 @@ var MyApp = (function () {
     eventHandling();
 
   }
-
+// console.log("This is the io var ", io())
   function event_process_for_signaling_server() {
-    socket = io.connect();
+    socket = io();
 
     const SDP_function = (data, to_connId) => {
       socket.emit("SDPProcess", {
